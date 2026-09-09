@@ -25,21 +25,39 @@ jobs:
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v2
+        with:
+          api-level: 31
 
       - name: Install dependencies
         run: |
           npm install
-          npm install react-native-webview
 
-      - name: Build APK
+      - name: Install React Native WebView
+        run: npm install react-native-webview
+
+      - name: Initialize Android project
+        run: |
+          if [ ! -d "android" ]; then
+            npx react-native init TempApp
+            cp -r TempApp/android ./
+            rm -rf TempApp
+          fi
+
+      - name: Build Release APK
         run: |
           cd android
           chmod +x gradlew
+          ./gradlew clean
           ./gradlew assembleRelease
           cd ..
 
-      - name: Upload APK as Artifact
+      - name: Upload APK
         uses: actions/upload-artifact@v3
         with:
           name: couple-watch-apk
           path: android/app/build/outputs/apk/release/app-release.apk
+          retention-days: 30
+
+      - name: Comment on commit
+        if: always()
+        run: echo "Build Status - Check Actions tab for results"
